@@ -34,7 +34,7 @@ def order():
     version_number = version_map.get(scenario, '1.0.0')
     run_synthetic = test_map.get(scenario, '1')
     trigger_github_workflow(version_number, run_synthetic)
-    session['response'] = f'Workflow triggered with version={version_number}, run_synthetic={run_synthetic}'
+    session['response'] = f'<ul><li>Version deployed: {version_number}</li><li>Test triggered: {run_synthetic}</li></ul>'
     return redirect(url_for('index', scenario=scenario))
 
 def trigger_github_workflow(version_number, run_synthetic):

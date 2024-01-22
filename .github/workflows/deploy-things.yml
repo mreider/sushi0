@@ -188,7 +188,7 @@ jobs:
           --verbose
         fi
     - name: Run integration tests
-      if: env.RUN_SYNTHETIC == 'true'
+      if: github.event_name == 'repository_dispatch'
       run: |
         time_start=$(date +%Y-%m-%dT%H:%M:%S.%NZ)
         echo "Starting integration tests..."
@@ -210,7 +210,7 @@ jobs:
           --verbose
     - name: Trigger HTTP Checks
       id: trigger_synthetic_test
-      if: env.RUN_SYNTHETIC == 'true'
+      if: github.event_name == 'repository_dispatch'
       run: |
         MONITOR_ID_TO_USE=$([[ "$RUN_SYNTHETIC" == "1" ]] && echo "${{ secrets.FIRST_MONITOR_ID }}" || echo "${{ secrets.MONITOR_ID }}")
         echo "synthetic_time_start=$(date +%Y-%m-%dT%H:%M:%S.%NZ)" >> $GITHUB_ENV
@@ -233,7 +233,7 @@ jobs:
         echo "::set-output name=executionId::$executionId"
         echo "Synthetic Test Triggered: $response"
     - name: HTTP Check Results
-      if: env.RUN_SYNTHETIC == 'true'
+      if: github.event_name == 'repository_dispatch'
       run: |
         workflow_status=ok
         executionId=${{ steps.trigger_synthetic_test.outputs.executionId }}
