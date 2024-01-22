@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${NAMESPACE}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sushi-frontend
+  namespace: ${NAMESPACE}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sushi-frontend
+  template:
+    metadata:
+      annotations:
+        oneagent.dynatrace.com/inject: "false"
+      labels:
+        app: sushi-frontend
+        rollout: fast-food-chain
+    spec:
+      containers:
+      - name: sushi-frontendd
+        image: mreider/thumbs-up-frontend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+        env:
+          - name: SERVICE_NAME
+            value: "sushi-frontend"
+          - name: ENVIRONMENT
+            value: "${NAMESPACE}"
+          - name: SERVICE_VERSION
+            value: "1.0.0"
+          - name: BACKEND_URL
+            value: "http://fast-food-backend-service:5000"
+          - name: DYNATRACE_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: dynatrace-secrets
+                key: dynatrace_token
+          - name: DYNATRACE_ENDPOINT
+            valueFrom:
+              secretKeyRef:
+                name: dynatrace-secrets
+                key: dynatrace_endpoint
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thumbs-up-frontend-service
+  namespace: canary
+spec:
+  selector:
+    app: sushi-frontend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5000
+  type: NodePort
+

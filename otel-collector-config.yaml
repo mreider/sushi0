@@ -1,0 +1,21 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+exporters:
+  logging:
+    loglevel: debug
+  otlphttp:
+    endpoint: "DYNATRACE_ENDPOINT_PLACEHOLDER/api/v2/otlp"
+    headers:
+      Authorization: "Api-Token DYNATRACE_TOKEN_PLACEHOLDER"
+
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [logging, otlphttp]
+

@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+<head>
+    <title>Deployer</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            height: 100vh;
+            margin: 0; /* Added to remove default margin */
+            display: flex;
+            justify-content: center;
+            align-items: center; /* Centers the container vertically */
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            width: 400px;
+            /* Removed margin: auto; */
+        }
+        .form-item {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px;
+            display: block;
+            margin-top: 20px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .response {
+            font-size: 18px;
+            color: #333;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <form action="/run" method="post">
+        <div class="form-item">
+            <input type="radio" name="version_number" id="version_2" value="1.0.0" checked>
+            <label for="version_2">Version 1.0.0</label>
+            <input type="radio" name="version_number" id="version_1" value="1.0.1">
+            <label for="version_1">Version 1.0.1</label><br>
+        </div>
+        <div class="form-item">
+            <input type="checkbox" name="run_synthetic" id="run_synthetic">
+            <label for="run_synthetic">Run Synthetic Test</label>
+        </div>
+        <button type="submit">Deploy</button>
+    </form>
+    <div class="response">{{ response }}</div>
+</div>
+</body>
+</html>

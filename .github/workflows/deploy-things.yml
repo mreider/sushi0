@@ -1,0 +1,272 @@
+name: Deploy Things
+on:
+  repository_dispatch:
+    types: [deploy]
+  push:
+    branches:
+      - main
+env:
+  BACKEND_IMAGE: mreider/thumbs-up-backend
+  FRONTEND_IMAGE: mreider/thumbs-up-frontend
+  PROXY_IMAGE: mreider/thumbs-up-proxy
+  DEPLOYER_IMAGE: mreider/thumbs-up-deployer
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      SERVICE_VERSION: ${{ github.event.client_payload.version_number || '1.0.0' }}
+      RUN_SYNTHETIC: ${{ github.event.client_payload.run_synthetic || 'false' }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install otel-cli
+      run: |
+        wget https://github.com/equinix-labs/otel-cli/releases/download/v0.4.1/otel-cli_0.4.1_linux_amd64.deb
+        sudo dpkg -i otel-cli_0.4.1_linux_amd64.deb 
+        sudo apt-get install -f
+    - name: Create workflow span and trace
+      run: |
+        echo "trace_id=$(openssl rand -hex 16)" >> $GITHUB_ENV
+        echo "parent_span_id=$(openssl rand -hex 8)" >> $GITHUB_ENV
+        echo "parent_time_start=$(date +%Y-%m-%dT%H:%M:%S.%NZ)" >> $GITHUB_ENV
+        echo "docker_time_start=$(date +%Y-%m-%dT%H:%M:%S.%NZ)" >> $GITHUB_ENV
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+    - name: Login to Docker Registry
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Build and Push Backend Docker Image
+      id: backend_docker_build
+      uses: docker/build-push-action@v2
+      with:
+        context: ./backend
+        file: ./backend/Dockerfile
+        push: true
+        tags: ${{ env.BACKEND_IMAGE }}:latest
+        load: false
+        outputs: type=registry
+    - name: Build and Push Deployer
+      id: deployer_build
+      uses: docker/build-push-action@v2
+      with:
+        context: ./deployer
+        file: ./deployer/Dockerfile
+        push: true
+        tags: ${{ env.DEPLOYER_IMAGE }}:latest
+        load: false
+        outputs: type=registry
+    - name: Build and Push Frontend Docker Image
+      id: frontend_docker_build
+      uses: docker/build-push-action@v2
+      with:
+        context: ./frontend
+        file: ./frontend/Dockerfile
+        push: true
+        tags: ${{ env.FRONTEND_IMAGE }}:latest
+        load: false
+        outputs: type=registry
+    - name: Build and Push Proxy Docker Image
+      id: proxy_docker_build
+      uses: docker/build-push-action@v2
+      with:
+        context: ./fast-food-proxy
+        file: ./fast-food-proxy/Dockerfile
+        push: true
+        tags: ${{ env.PROXY_IMAGE }}:latest
+        load: false
+        outputs: type=registry
+    - name: End Docker Buildx
+      run: |
+        time_end=$(date +%Y-%m-%dT%H:%M:%S.%NZ)
+        if [ "$RUN_SYNTHETIC" = "true" ]; then
+          otel-cli span create \
+          --endpoint=${{ secrets.DYNATRACE_ENDPOINT }}/api/v2/otlp/v1/traces \
+          --otlp-headers="Authorization=Api-Token ${{ secrets.DYNATRACE_TOKEN}}" \
+          --service=workflow \
+          --name="Docker Build" \
+          --force-parent-span-id=${{ env.parent_span_id }} \
+          --start=${{ env.docker_time_start }}  \
+          --end=$time_end \
+          --kind=internal \
+          --force-trace-id=${{ env.trace_id }} \
+          --status-code="ok" \
+          --status-description="Docker Built Successfully" \
+          --verbose
+        fi
+        echo "deploy_time_start=$(date +%Y-%m-%dT%H:%M:%S.%NZ)" >> $GITHUB_ENV
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v0.2.0
+      with:
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        export_default_credentials: true
+    - name: Install gke-gcloud-auth-plugin
+      run: |
+        gcloud components install gke-gcloud-auth-plugin
+    - name: Authenticate with GCP
+      run: |
+        echo '${{ secrets.GCP_SA_KEY }}' | gcloud auth activate-service-account --key-file=-
+    - name: Deploy to GKE
+      run: |
+        echo "workflow_status=ok" >> $GITHUB_ENV
+        echo "workflow_description='The workflow succeeded'" >> $GITHUB_ENV
+        BACKEND_DIGEST=$(echo ${{ steps.backend_docker_build.outputs.digest }} | cut -d'@' -f2)
+        sed -i "s|thumbs-up-backend:latest|thumbs-up-backend@${BACKEND_DIGEST}|" kubernetes/backend_deployment.yaml
+        DEPLOYER_DIGEST=$(echo ${{ steps.deployer_build.outputs.digest }} | cut -d'@' -f2)
+        sed -i "s|thumbs-up-deployer:latest|thumbs-up-deployer@${DEPLOYER_DIGEST}|" kubernetes/deployer_deployment.yaml
+        FRONTEND_DIGEST=$(echo ${{ steps.frontend_docker_build.outputs.digest }} | cut -d'@' -f2)
+        sed -i "s|thumbs-up-frontend:latest|thumbs-up-frontend@${FRONTEND_DIGEST}|" kubernetes/frontend_deployment.yaml
+        PROXY_DIGEST=$(echo ${{ steps.proxy_docker_build.outputs.digest }} | cut -d'@' -f2)
+        sed -i "s|thumbs-up-proxy:latest|thumbs-up-proxy@${PROXY_DIGEST}|" kubernetes/fast-food-proxy-deployment.yaml
+        gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER_NAME }} --zone ${{ secrets.GKE_CLUSTER_ZONE }}
+        kubectl create secret generic dynatrace-secrets \
+        --from-literal=dynatrace_endpoint=${{ secrets.DYNATRACE_ENDPOINT }} \
+        --from-literal=dynatrace_token=${{ secrets.DYNATRACE_TOKEN }} \
+        --dry-run=client -o yaml | kubectl apply -f - -n prod
+        kubectl create secret generic dynatrace-secrets \
+        --from-literal=dynatrace_endpoint=${{ secrets.DYNATRACE_ENDPOINT }} \
+        --from-literal=dynatrace_token=${{ secrets.DYNATRACE_TOKEN }} \
+        --dry-run=client -o yaml | kubectl apply -f - -n canary
+
+        # This replaces all the services with the latest images
+
+        if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+        for NAMESPACE in "canary" "prod" "test"
+        do
+          export NAMESPACE
+          if [ "$NAMESPACE" = "canary" ]; then
+            FREQUENCY="10.0"
+            SERVICE_VERSION="1.0.0"
+          elif [ "$NAMESPACE" = "prod" ]; then
+            FREQUENCY="0.3"
+            SERVICE_VERSION="1.0.0"
+          elif [ "$NAMESPACE" = "test" ]; then
+            FREQUENCY="10.8"
+            SERVICE_VERSION="1.0.0.9444nfb"
+          fi
+          export SERVICE_VERSION
+          export FREQUENCY
+          envsubst '$NAMESPACE,$FREQUENCY,$SERVICE_VERSION' < kubernetes/backend_deployment.yaml | kubectl apply -f -
+          envsubst '$NAMESPACE,$FREQUENCY' < kubernetes/frontend_deployment.yaml | kubectl apply -f -
+          envsubst '$NAMESPACE,$FREQUENCY' < kubernetes/fast-food-proxy-deployment.yaml | kubectl apply -f -
+        done
+        fi
+        
+        # the deployr doesn't have any changes related to environment variables:
+        kubectl apply -f kubernetes/deployer_deployment.yaml
+
+        # This is a manual push, and it's just about the canary, to see that the app is running ok
+        # The version is incremented, which causes problems (200 response, but weird results)
+        # This is why we run a synthetic test.
+        echo "VERSION_NUMBER="$VERSION_NUMER
+        if [ "$GITHUB_EVENT_NAME" = "repository_dispatch" ]; then
+          NAMESPACE=canary
+          FREQUENCY="10.0"
+          SERVICE_VERSION=$SERVICE_VERSION # 1.0.0 or 1.0.1 - which has errors
+          export NAMESPACE
+          export SERVICE_VERSION
+          export FREQUENCY
+          envsubst '$NAMESPACE,$FREQUENCY,$SERVICE_VERSION' < kubernetes/backend_deployment.yaml | kubectl apply -f -
+        fi
+
+        time_end=$(date +%Y-%m-%dT%H:%M:%S.%NZ)
+
+        if [ "$RUN_SYNTHETIC" = "true" ]; then
+          otel-cli span create \
+          --endpoint=${{ secrets.DYNATRACE_ENDPOINT }}/api/v2/otlp/v1/traces \
+          --otlp-headers="Authorization=Api-Token ${{ secrets.DYNATRACE_TOKEN}}" \
+          --service=workflow \
+          --name="Deploy to Kubernetes" \
+          --force-parent-span-id=${{ env.parent_span_id }} \
+          --start=${{ env.deploy_time_start }}  \
+          --end=$time_end \
+          --kind=internal \
+          --force-trace-id=${{ env.trace_id }} \
+          --status-code="ok" \
+          --status-description="Docker Built Successfully" \
+          --verbose
+        fi
+    - name: Trigger Synthetic Test
+      id: trigger_synthetic_test
+      if: env.RUN_SYNTHETIC == 'true'
+      run: |
+        echo "synthetic_time_start=$(date +%Y-%m-%dT%H:%M:%S.%NZ)" >> $GITHUB_ENV
+        response=$(curl -X "POST" \
+          "${{ secrets.DYNATRACE_ENDPOINT }}/api/v2/synthetic/executions/batch" \
+          -H "accept: application/json; charset=utf-8" \
+          -H "Authorization: Api-Token ${{ secrets.DYNATRACE_TOKEN }}" \
+          -H "Content-Type: application/json; charset=utf-8" \
+          -d \
+        '{
+          "failOnPerformanceIssue": false,
+          "failOnSslWarning": true,
+          "monitors": [
+            {
+              "monitorId": "${{ secrets.MONITOR_ID }}"
+            }
+          ]
+        }')
+        executionId=$(echo $response | jq -r '.triggered[0].executions[0].executionId')
+        echo "::set-output name=executionId::$executionId"
+        echo "Synthetic Test Triggered: $response"
+    - name: Check Synthetic Test Result
+      if: env.RUN_SYNTHETIC == 'true'
+      run: |
+        workflow_status=ok
+        executionId=${{ steps.trigger_synthetic_test.outputs.executionId }}
+        for i in {1..3}; do
+          response=$(curl -X "GET" \
+            "${{ secrets.DYNATRACE_ENDPOINT }}/api/v2/synthetic/executions/$executionId" \
+            -H "accept: application/json; charset=utf-8" \
+            -H "Authorization: Api-Token ${{ secrets.DYNATRACE_TOKEN }}")
+          echo "Response: $response"
+          status=$(echo "$response" | jq -r '.simpleResults.status')
+          if [ "$status" == "SUCCESS" ]; then
+            echo "Synthetic test completed successfully."
+            break
+          else
+            echo "Attempt $i: Synthetic test still running. Checking again in 10 seconds..."
+            sleep 11
+          fi
+        done
+        if [ "$status" != "SUCCESS" ]; then
+          echo "Synthetic test did not complete successfully after 3 attempts."
+          echo "workflow_status=error" >> $GITHUB_ENV
+          workflow_status=error
+          echo "workflow_description='Synthetic execution ${{ steps.trigger_synthetic_test.outputs.executionId }} failed'" >> $GITHUB_ENV
+        fi
+        time_end=$(date +%Y-%m-%dT%H:%M:%S.%NZ)
+          if [ "$RUN_SYNTHETIC" = "true" ]; then
+          otel-cli span create \
+          --endpoint=${{ secrets.DYNATRACE_ENDPOINT }}/api/v2/otlp/v1/traces \
+          --otlp-headers="Authorization=Api-Token ${{ secrets.DYNATRACE_TOKEN}}" \
+          --service=workflow \
+          --name="Synthetic Testing" \
+          --force-parent-span-id=${{ env.parent_span_id }} \
+          --start=${{ env.synthetic_time_start }}  \
+          --end=$time_end \
+          --kind=internal \
+          --force-trace-id=${{ env.trace_id }} \
+          --status-code=$workflow_status \
+          --status-description"${{ env.workflow_desription }}" \
+          --verbose
+        fi
+    - name: Create parent span for cleanup
+      run: |
+        time_end=$(date +%Y-%m-%dT%H:%M:%S.%NZ)
+        if [ "$RUN_SYNTHETIC" = "true" ]; then
+          otel-cli span create \
+          --endpoint=${{ secrets.DYNATRACE_ENDPOINT }}/api/v2/otlp/v1/traces \
+          --otlp-headers="Authorization=Api-Token ${{ secrets.DYNATRACE_TOKEN}}" \
+          --service=workflow \
+          --name="Workflow Run" \
+          --start=${{ env.parent_time_start}}  \
+          --end=$time_end \
+          --kind=SERVER \
+          --force-trace-id=${{ env.trace_id }} \
+          --force-span-id=${{ env.parent_span_id}} \
+          --status-code=${{ env.workflow_status }} \
+          --status-description"${{ env.workflow_desription }}" \
+          --verbose
+        fi

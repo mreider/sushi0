@@ -1,0 +1,6 @@
+kubernetes==25.3.0
+requests==2.28.1
+opentelemetry-instrumentation
+opentelemetry-instrumentation-requests
+opentelemetry-exporter-otlp
+opentelemetry-exporter-otlp-proto-http

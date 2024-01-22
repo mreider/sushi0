@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sushi-deployer
+  namespace: canary
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sushi-deployer
+  template:
+    metadata:
+      annotations:
+        oneagent.dynatrace.com/inject: "false"
+      labels:
+        app: sushi-deployer
+    spec:
+      containers:
+      - name: deployer
+        image: mreider/thumbs-up-deployer:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+        env:
+          - name: DYNATRACE_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: dynatrace-secrets
+                key: dynatrace_token
+          - name: DYNATRACE_ENDPOINT
+            valueFrom:
+              secretKeyRef:
+                name: dynatrace-secrets
+                key: dynatrace_endpoint
+          - name: GITHUB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: dynatrace-secrets
+                key: github_token
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: deployer-service
+  namespace: canary
+spec:
+  selector:
+    app: sushi-deployer
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5000
+  type: NodePort

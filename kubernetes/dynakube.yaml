@@ -1,0 +1,25 @@
+apiVersion: dynatrace.com/v1beta1
+kind: DynaKube
+metadata:
+  name: dynakube
+  namespace: dynatrace
+spec:
+  apiUrl: https://inx16596.sprint.apps.dynatracelabs.com/api
+  namespaceSelector:
+    matchLabels:
+      instrument: dynatrace
+  oneAgent:
+    applicationMonitoring:
+      useCSIDriver: false
+  activeGate:
+    capabilities:
+      - routing
+      - kubernetes-monitoring
+      - dynatrace-api
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1.5Gi

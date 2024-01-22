@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sushi0-ingress
+  namespace: canary
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "reider-perform-up"
+    networking.gke.io/managed-certificates: universal-ssl-cert
+spec:
+  rules:
+  - host: sushi0.cc
+    http:
+      paths:
+      - pathType: ImplementationSpecific
+        backend:
+          service:
+            name: thumbs-up-frontend-service
+            port:
+              number: 80
+  - host: deploy.sushi0.cc
+    http:
+      paths:
+      - pathType: ImplementationSpecific
+        backend:
+          service:
+            name: deployer-service
+            port:
+              number: 80
+

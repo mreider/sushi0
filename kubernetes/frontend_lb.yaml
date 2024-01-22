@@ -1,0 +1,14 @@
+#---
+#apiVersion: v1
+#kind: Service
+#metadata:
+#name: thumbs-up-frontend-service
+#  namespace: canary
+#spec:
+#  selector:
+#    app: sushi-frontend
+#  ports:
+#  - protocol: TCP
+#    port: 80
+#    targetPort: 5000
+#  type: LoadBalancer

@@ -1,0 +1,9 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: universal-ssl-cert
+  namespace: canary
+spec:
+  domains:
+    - deploy.sushi0.cc
+    - sushi0.cc
