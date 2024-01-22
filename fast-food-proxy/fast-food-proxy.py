@@ -1,5 +1,6 @@
 import time
 import requests
+from requests.auth import HTTPBasicAuth
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import (OTLPSpanExporter,)
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
@@ -32,7 +33,10 @@ merged.update({
     "environment": ENVIRONMENT
 })
 
-endpoint = "https://bmm59542.dev.dynatracelabs.com/api/v2/otlp/v1/traces"
+un = 'sushi'
+pw = 'sushi'
+
+endpoint = os.getenv('DYNATRACE_ENDPOINT') + "/api/v2/otlp/v1/traces"
 resource = Resource.create(merged)
 token_string = "Api-Token " + os.getenv('DYNATRACE_TOKEN')
 format = "%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] - %(message)s"
@@ -48,7 +52,7 @@ logger = logging.getLogger(__name__)
 def do_constantly():
     with tracer.start_as_current_span("post-order"):
         headers = {'Accept': 'text/plain'}
-        resp = requests.post(url="http://thumbs-up-frontend-service-internal:5000/order", headers=headers)
+        resp = requests.post(url="http://thumbs-up-frontend-service-internal:5000/order", auth=HTTPBasicAuth(un, pw), headers=headers)
         logger.info(resp.status_code)
 
 while True:

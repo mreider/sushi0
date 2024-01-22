@@ -14,8 +14,17 @@ from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry._logs import set_logger_provider
+from flask_httpauth import HTTPBasicAuth
+from werkzeug.security import generate_password_hash, check_password_hash
+
 
 app = Flask(__name__)
+
+auth = HTTPBasicAuth()
+
+users = {
+    "sushi": generate_password_hash("sushi")
+}
 
 merged = dict()
 for name in ["dt_metadata_e617c525669e072eebe3d0f08212e8f2.json", "/var/lib/dynatrace/enrichment/dt_metadata.json", "/var/lib/dynatrace/enrichment/dt_host_metadata.json"]:
@@ -75,17 +84,26 @@ FlaskInstrumentor().instrument_app(app)
 
 # Route Definitions
 
+@auth.verify_password
+def verify_password(un, pw):
+    if un in users and \
+            check_password_hash(users.get(un), pw):
+        return un
+
+
 @app.route('/healthz')
 def healthz():
     return jsonify({'status': 'healthy'}), 200
 
 @app.route('/')
+@auth.login_required
 def index():
     current_span = trace.get_current_span()
     current_span.set_attribute("span.name", "serve-menu")
     return render_template('index.html')
 
 @app.route('/order', methods=['POST'])
+@auth.login_required
 def order():
     current_span = trace.get_current_span()
     current_span.set_attribute("span.name", "receive-order")

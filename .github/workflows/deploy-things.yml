@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SERVICE_VERSION: ${{ github.event.client_payload.version_number || '1.0.0' }}
-      RUN_SYNTHETIC: ${{ github.event.client_payload.run_synthetic || 'false' }}
+      RUN_SYNTHETIC: ${{ github.event.client_payload.run_synthetic || '1' }}
     steps:
     - uses: actions/checkout@v2
     - name: Install otel-cli
@@ -79,7 +79,7 @@ jobs:
     - name: End Docker Buildx
       run: |
         time_end=$(date +%Y-%m-%dT%H:%M:%S.%NZ)
-        if [ "$RUN_SYNTHETIC" = "true" ]; then
+        if [ "$GITHUB_EVENT_NAME" = "repository_dispatch" ]; then
           otel-cli span create \
           --endpoint=${{ secrets.DYNATRACE_ENDPOINT }}/api/v2/otlp/v1/traces \
           --otlp-headers="Authorization=Api-Token ${{ secrets.DYNATRACE_TOKEN}}" \
@@ -101,13 +101,13 @@ jobs:
         project_id: ${{ secrets.GCP_PROJECT_ID }}
         service_account_key: ${{ secrets.GCP_SA_KEY }}
         export_default_credentials: true
-    - name: Install gke-gcloud-auth-plugin
+    - name: Install Google Cloud SDK
       run: |
         gcloud components install gke-gcloud-auth-plugin
     - name: Authenticate with GCP
       run: |
         echo '${{ secrets.GCP_SA_KEY }}' | gcloud auth activate-service-account --key-file=-
-    - name: Deploy to GKE
+    - name: Deploy to Google Kubernetes Engine
       run: |
         echo "workflow_status=ok" >> $GITHUB_ENV
         echo "workflow_description='The workflow succeeded'" >> $GITHUB_ENV
@@ -152,14 +152,14 @@ jobs:
           envsubst '$NAMESPACE,$FREQUENCY' < kubernetes/fast-food-proxy-deployment.yaml | kubectl apply -f -
         done
         fi
-        
+
         # the deployr doesn't have any changes related to environment variables:
         kubectl apply -f kubernetes/deployer_deployment.yaml
 
         # This is a manual push, and it's just about the canary, to see that the app is running ok
         # The version is incremented, which causes problems (200 response, but weird results)
         # This is why we run a synthetic test.
-        echo "VERSION_NUMBER="$VERSION_NUMER
+        echo "VERSION_NUMBER="$VERSION_NUMBER
         if [ "$GITHUB_EVENT_NAME" = "repository_dispatch" ]; then
           NAMESPACE=canary
           FREQUENCY="10.0"
@@ -172,7 +172,7 @@ jobs:
 
         time_end=$(date +%Y-%m-%dT%H:%M:%S.%NZ)
 
-        if [ "$RUN_SYNTHETIC" = "true" ]; then
+        if [ "$GITHUB_EVENT_NAME" = "repository_dispatch" ]; then
           otel-cli span create \
           --endpoint=${{ secrets.DYNATRACE_ENDPOINT }}/api/v2/otlp/v1/traces \
           --otlp-headers="Authorization=Api-Token ${{ secrets.DYNATRACE_TOKEN}}" \
@@ -187,10 +187,32 @@ jobs:
           --status-description="Docker Built Successfully" \
           --verbose
         fi
-    - name: Trigger Synthetic Test
+    - name: Run integration tests
+      if: env.RUN_SYNTHETIC == 'true'
+      run: |
+        time_start=$(date +%Y-%m-%dT%H:%M:%S.%NZ)
+        echo "Starting integration tests..."
+        bash -c 't=12; echo "Running..."; sleep $t'
+        echo "Integration tests completed."
+        time_end=$(date +%Y-%m-%dT%H:%M:%S.%NZ)
+        otel-cli span create \
+          --endpoint=${{ secrets.DYNATRACE_ENDPOINT }}/api/v2/otlp/v1/traces \
+          --otlp-headers="Authorization=Api-Token ${{ secrets.DYNATRACE_TOKEN}}" \
+          --service=workflow \
+          --name="Run integration tests" \
+          --force-parent-span-id=${{ env.parent_span_id }} \
+          --start=$time_start  \
+          --end=$time_end \
+          --kind=internal \
+          --force-trace-id=${{ env.trace_id }} \
+          --status-code="ok" \
+          --status-description="Tests passed" \
+          --verbose
+    - name: Trigger HTTP Checks
       id: trigger_synthetic_test
       if: env.RUN_SYNTHETIC == 'true'
       run: |
+        MONITOR_ID_TO_USE=$([[ "$RUN_SYNTHETIC" == "1" ]] && echo "${{ secrets.FIRST_MONITOR_ID }}" || echo "${{ secrets.MONITOR_ID }}")
         echo "synthetic_time_start=$(date +%Y-%m-%dT%H:%M:%S.%NZ)" >> $GITHUB_ENV
         response=$(curl -X "POST" \
           "${{ secrets.DYNATRACE_ENDPOINT }}/api/v2/synthetic/executions/batch" \
@@ -203,14 +225,14 @@ jobs:
           "failOnSslWarning": true,
           "monitors": [
             {
-              "monitorId": "${{ secrets.MONITOR_ID }}"
+              "monitorId": "'"$MONITOR_ID_TO_USE"'"
             }
           ]
         }')
         executionId=$(echo $response | jq -r '.triggered[0].executions[0].executionId')
         echo "::set-output name=executionId::$executionId"
         echo "Synthetic Test Triggered: $response"
-    - name: Check Synthetic Test Result
+    - name: HTTP Check Results
       if: env.RUN_SYNTHETIC == 'true'
       run: |
         workflow_status=ok
@@ -237,7 +259,7 @@ jobs:
           echo "workflow_description='Synthetic execution ${{ steps.trigger_synthetic_test.outputs.executionId }} failed'" >> $GITHUB_ENV
         fi
         time_end=$(date +%Y-%m-%dT%H:%M:%S.%NZ)
-          if [ "$RUN_SYNTHETIC" = "true" ]; then
+        if [ "$GITHUB_EVENT_NAME" = "repository_dispatch" ]; then
           otel-cli span create \
           --endpoint=${{ secrets.DYNATRACE_ENDPOINT }}/api/v2/otlp/v1/traces \
           --otlp-headers="Authorization=Api-Token ${{ secrets.DYNATRACE_TOKEN}}" \
@@ -253,9 +275,9 @@ jobs:
           --verbose
         fi
     - name: Create parent span for cleanup
+      if: github.event_name == 'repository_dispatch'
       run: |
         time_end=$(date +%Y-%m-%dT%H:%M:%S.%NZ)
-        if [ "$RUN_SYNTHETIC" = "true" ]; then
           otel-cli span create \
           --endpoint=${{ secrets.DYNATRACE_ENDPOINT }}/api/v2/otlp/v1/traces \
           --otlp-headers="Authorization=Api-Token ${{ secrets.DYNATRACE_TOKEN}}" \
@@ -269,4 +291,23 @@ jobs:
           --status-code=${{ env.workflow_status }} \
           --status-description"${{ env.workflow_desription }}" \
           --verbose
-        fi
+    - name: Create a Deploy Event
+      if: github.event_name == 'repository_dispatch'
+      run: |
+        curl -X "POST" \
+          "${{ secrets.DYNATRACE_ENDPOINT }}/api/v2/events/ingest" \
+          -H "accept: application/json; charset=utf-8" \
+          -H "Authorization: Api-Token ${{ secrets.DYNATRACE_TOKEN }}" \
+          -H "Content-Type: application/json; charset=utf-8" \
+          -d \
+        '{
+          "eventType": "CUSTOM_DEPLOYMENT",
+          "source": "GitHub Actions",
+          "deploymentName": "Deploy to Kubernetes",
+          "deploymentVersion": "'${{ env.SERVICE_VERSION }}'",
+          "deploymentProject": "Sushi To Go",
+          "customProperties": {
+            "workflow_status": "'${{ env.workflow_status }}'",
+            "workflow_description": "'${{ env.workflow_description }}'"
+          }
+        }'

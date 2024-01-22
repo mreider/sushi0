@@ -4,7 +4,7 @@ metadata:
   name: dynakube
   namespace: dynatrace
 spec:
-  apiUrl: https://inx16596.sprint.apps.dynatracelabs.com/api
+  apiUrl: https://inx16596.sprint.dynatracelabs.com/api
   namespaceSelector:
     matchLabels:
       instrument: dynatrace

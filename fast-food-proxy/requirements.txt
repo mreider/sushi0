@@ -4,3 +4,5 @@ opentelemetry-instrumentation
 opentelemetry-instrumentation-requests
 opentelemetry-exporter-otlp
 opentelemetry-exporter-otlp-proto-http
+Flask-HTTPAuth
+Werkzeug

@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 <head>
-    <title>Deployer</title>
+    <title>Perform 2024 OpenTelemetry Demo</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -12,14 +12,7 @@
             justify-content: center;
             align-items: center; /* Centers the container vertically */
         }
-        .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            width: 400px;
-            /* Removed margin: auto; */
-        }
+
         .form-item {
             text-align: left;
             margin-bottom: 20px;
@@ -44,24 +37,119 @@
             color: #333;
             margin-top: 20px;
         }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            width: 400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .image-container {
+            position: relative;
+            width: 320px; /* Adjust as needed */
+            height: 260px; /* Adjust as needed */
+            overflow: hidden;
+            margin: 20px auto; /* Centering the container */
+        }
+
+        .image-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: opacity 0.3s; /* Smooth transition for opacity */
+            opacity: 0; /* Initially hidden */
+        }
+
+        .show-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 10; /* Ensure button is above the image */
+        }
     </style>
+        <script>
+            document.addEventListener('DOMContentLoaded', (event) => {
+                initializeImageVisibility();
+            });
+        
+            function initializeImageVisibility() {
+                var img = document.getElementById("imageContainer").querySelector("img");
+                var button = document.getElementById("showButton");
+                img.style.opacity = "0";
+                button.style.display = "block";
+            }
+        
+            function goToScenario() {
+                var scenario = document.getElementById("scenarioSelect").value;
+                window.location.href = "/?scenario=" + scenario;
+            }
+        
+            function toggleImage() {
+                var img = document.getElementById("imageContainer").querySelector("img");
+                var button = document.getElementById("showButton");
+                if (img.style.opacity === "0") {
+                    img.style.opacity = "1";
+                    button.style.display = "none";
+                } else {
+                    img.style.opacity = "0";
+                    button.style.display = "block";
+                }
+            }
+        </script>
 </head>
 <body>
+
 <div class="container">
+    <div class="menu">
+        <select id="scenarioSelect" onchange="goToScenario()">
+            <option value="1" {% if scenario == '1' %}selected{% endif %}>Scenario 1</option>
+            <option value="2" {% if scenario == '2' %}selected{% endif %}>Scenario 2</option>
+            <option value="3" {% if scenario == '3' %}selected{% endif %}>Scenario 3</option>
+            <option value="4" {% if scenario == '4' %}selected{% endif %}>Scenario 4</option>
+        </select>
+    </div>
+   <div>&nbsp;</div>
     <form action="/run" method="post">
+        <input type="hidden" name="scenario" value="{{ scenario }}">
         <div class="form-item">
-            <input type="radio" name="version_number" id="version_2" value="1.0.0" checked>
-            <label for="version_2">Version 1.0.0</label>
-            <input type="radio" name="version_number" id="version_1" value="1.0.1">
-            <label for="version_1">Version 1.0.1</label><br>
+            {% if scenario == '1' or scenario == '2' %}
+            <input type="radio" name="version_number" id="version_1" value="1.0.1" checked>
+            <label for="version_1">Version 1.0.1</label>
+            {% endif %}
+            {% if scenario == '3' or scenario == '4' %}
+            <input type="radio" name="version_number" id="version_0" value="1.0.0" checked>
+            <label for="version_0">Version 1.0.0</label>
+            {% endif %}
         </div>
         <div class="form-item">
-            <input type="checkbox" name="run_synthetic" id="run_synthetic">
-            <label for="run_synthetic">Run Synthetic Test</label>
+            {% if scenario == '1' or scenario == '3' %}
+            <input type="checkbox" name="run_synthetic" id="run_synthetic_1" checked>
+            <label for="run_synthetic_1">Run Synthetic Test 1</label>
+            {% endif %}
+            {% if scenario == '2' or scenario == '4' %}
+            <input type="checkbox" name="run_synthetic" id="run_synthetic_2" checked>
+            <label for="run_synthetic_2">Run Synthetic Test 2</label>
+            {% endif %}
         </div>
         <button type="submit">Deploy</button>
     </form>
     <div class="response">{{ response }}</div>
+    <div class="image-container" id="imageContainer">
+        <img src="/static/images/{{ scenario }}.png" alt="Scenario Image">
+        <button id="showButton" class="show-button" onclick="toggleImage()">Reveal Scenario</button>
+    </div>
 </div>
 </body>
 </html>
