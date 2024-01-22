@@ -76,7 +76,18 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            z-index: 10; /* Ensure button is above the image */
+            z-index: 10;
+        }
+        .deploy-button {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
     </style>
         <script>
@@ -123,29 +134,22 @@
    <div>&nbsp;</div>
     <form action="/run" method="post">
         <input type="hidden" name="scenario" value="{{ scenario }}">
-        <div class="form-item">
-            {% if scenario == '1' or scenario == '2' %}
-            <input type="radio" name="version_number" id="version_1" value="1.0.1" checked>
-            <label for="version_1">Version 1.0.1</label>
-            {% endif %}
-            {% if scenario == '3' or scenario == '4' %}
-            <input type="radio" name="version_number" id="version_0" value="1.0.0" checked>
-            <label for="version_0">Version 1.0.0</label>
-            {% endif %}
-        </div>
-        <div class="form-item">
-            {% if scenario == '1' or scenario == '3' %}
-            <input type="checkbox" name="run_synthetic" id="run_synthetic_1" checked>
-            <label for="run_synthetic_1">Run Synthetic Test 1</label>
-            {% endif %}
-            {% if scenario == '2' or scenario == '4' %}
-            <input type="checkbox" name="run_synthetic" id="run_synthetic_2" checked>
-            <label for="run_synthetic_2">Run Synthetic Test 2</label>
-            {% endif %}
-        </div>
-        <button type="submit">Deploy</button>
-    </form>
-    
+        <form action="/run" method="post">
+            <input type="hidden" name="scenario" value="{{ scenario }}">
+            <div class="form-item">
+                <input type="radio" name="version_number" id="version_1" value="1.0.0" {% if scenario == '1' or scenario == '4' %}checked{% endif %}>
+                <label for="version_1">Version 1.0.0</label>
+                <input type="radio" name="version_number" id="version_0" value="1.0.1" {% if scenario == '2' or scenario == '3' %}checked{% endif %}>
+                <label for="version_0">Version 1.0.1</label>
+            </div>
+            <div class="form-item">
+                <input type="radio" name="run_synthetic" id="run_synthetic_1" value="1" {% if scenario == '1' or scenario == '2' %}checked{% endif %}>
+                <label for="run_synthetic_1">Run Synthetic Test 1</label>
+                <input type="radio" name="run_synthetic" id="run_synthetic_2" value="2" {% if scenario == '3' or scenario == '4' %}checked{% endif %}>
+                <label for="run_synthetic_2">Run Synthetic Test 2</label>
+            </div>
+            <button type="submit" class="deploy-button">Deploy</button>
+        </form>
     <div class="response">{{ response|safe }}</div>
 
     <div class="image-container" id="imageContainer">
