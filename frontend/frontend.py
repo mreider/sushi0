@@ -38,7 +38,7 @@ for name in ["dt_metadata_e617c525669e072eebe3d0f08212e8f2.json", "/var/lib/dyna
 
 
 # Logging and Tracer Configuration
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 SERVICE_NAME = os.getenv('SERVICE_NAME', 'frontend')
 SERVICE_VERSION = os.getenv('SERVICE_VERSION', '1.0.0')
 ENVIRONMENT = os.getenv('ENVIRONMENT', 'default-env')

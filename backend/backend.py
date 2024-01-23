@@ -62,7 +62,7 @@ merged.update({
     "service.version": SERVICE_VERSION,
     "environment": ENVIRONMENT
 })
-set_logger_provider(logger_provider)
+
 logger_provider = LoggerProvider(resource=Resource.create(merged))
 logger_provider.add_log_record_processor(
   BatchLogRecordProcessor(OTLPLogExporter(
@@ -70,6 +70,7 @@ logger_provider.add_log_record_processor(
 	headers = {"Authorization": "Api-Token " + token}
   ))
 )
+set_logger_provider(logger_provider)
 handler = LoggingHandler(level=logging.NOTSET, logger_provider=logger_provider)
 trace.set_tracer_provider(
     TracerProvider(
