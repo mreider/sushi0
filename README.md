@@ -98,17 +98,17 @@ The demo is broken up into four different scenarios. All of this information is 
 
 Show the pipeline, and [all of its steps on Github](https://github.com/mreider/sushi0/actions/runs/7625438947). Now explain that this Github Workflow is sending traces to Dynatrace for each step of the pipeline. We do this to measure how performant it is, catch problems in deploying the application, run integration tests, and run HTTP checks on the public load balancer that exposes the Kubernetes service.
 
-![scenario 1](readme_images/scenario1-pipeline.png)
+![scenario 1 pipeline](readme_images/scenario1-pipeline.png)
 
 Now show [the trace](https://inx16596.sprint.apps.dynatracelabs.com/ui/apps/dynatrace.classic.distributed.traces/#trace;traceId=239f6e13100b1d86c2e2a88a82667287) that the pipeline created. Click into each span and show the success method for each. No errors here. Call attention to the synthetic test that runs at the end, and show [this in the synthetic screen](https://inx16596.sprint.apps.dynatracelabs.com/ui/apps/dynatrace.classic.synthetic/ui/http-monitor/HTTP_CHECK-6FA35DA4ECA0E137). The tests passed.
 
 Show the definition of the synthetic test, which hits the /healthz endpoint, and explain why this is a problem. This health check has nothing to do with a real user's experience. Go to [the notebook page](https://inx16596.sprint.apps.dynatracelabs.com/ui/document/v0/#share=068c2aee-daa3-43a0-8821-755276eeeb86) we showed before, and confirm that orders are flowing, being fulfilled, and that there are no db errors in the canary namespace.
 
-![scenario 1](readme_images/scenario1-notebook.png)
+![scenario 1 notebook](readme_images/scenario1-notebook.png)
 
 When you are finished, you can go back and reveal the scenario in the deploy screen. The app is OK, but the test is no good as it checks /healthz.
 
-![scenario 1](readme_images/scenario1-revealed.png)
+![scenario 1 revealed](readme_images/scenario1-revealed.png)
 
 ### Scenario 2
 
@@ -118,11 +118,63 @@ When you are finished, you can go back and reveal the scenario in the deploy scr
 - Explain that the **Deploy** button pushed 1.0.1 of the application and triggered the same HTTP check as before
 - Again - no need to actually deploy, and wait to reveal the scenario until the end
 
+![scenario 2](readme_images/scenario2-deployer.png)
+
 #### Analysis
+
+Return to Github and show a [scenario 2 deployment](https://github.com/mreider/sushi0/actions/runs/7626283397). Focus in on the results of the HTTP Check. Show that the passed in the run log. And then go to [the trace view in Dynatrace](https://inx16596.sprint.apps.dynatracelabs.com/ui/apps/dynatrace.classic.distributed.traces/#trace;traceId=239f6e13100b1d86c2e2a88a82667287). It's the same as before. All of the steps passed. But all is not well.
+
+Look at the Notebook again, with views of orders received and fulfilled. It looks now like there are no orders being fulfilled. Scroll down to the last 10 failed orders and see that now there are orders failing in the canary namespace, not just in the test namespace. And yet, we see 200 response codes. So this is proof that our HTTP health check is a bad way to test the canary before we push to production.
+
+Re-inforce that all of this data is OpenTelemetry.
+
+![scenario 2](readme_images/scenario2-notebook.png)
+
+Reveal the scenario and explain what we learned. It's a bad canary, but the bad test did not catch it. Dangerous!
+
+![scenario 2](readme_images/scenario2-notebook.png)
+
+### Scenario 3
+
+#### Switching to sythetic tests
+
+- Browse https://deploy.sushi0.cc and choose scenario 3
+- Explain that the **Deploy** button pushed the bad canary (1.0.1) but now we'll switch to a synthetic test
+- Again - no need to actually deploy
+- You can click reveal this time. The audience understands what you're doing.
+
+![scenario 3](readme_images/scenario3-revealed.png)
+
+#### Analysis
+
+Look at a [trace view in Dynatrace](https://inx16596.sprint.apps.dynatracelabs.com/ui/apps/dynatrace.classic.distributed.traces/#trace;gf=all;traceId=e9f9d854c44ba0ad74efffe5be048541) for this Github workflow and see that there were errors with the synthetic test. Now we have a test that works, and shows that things are failing, even though there is a 200 response code. 
+
+Visit the test itself and show how it is defined. This will click the order button and expect certain results in the DOM. So even though it's a 200, the test will fail.
+
+![scenario 3](readme_images/scenario3-synthetic.png)
+
+### Scenario 4
+
+#### All is good
+
+- Browse https://deploy.sushi0.cc and choose scenario 4
+- Explain that the **Deploy** button pushed a new canary (1.0.2) and now we'll test it with the proper check
+- Again - no need to actually deploy
+- Wait to reveal the scenario - it's the (very predictable) surprise at the end. Make a joke. Live a little.
+
+![scenario 4 ](readme_images/scenario4-deployer.png)
+
+#### Analysis
+
+ Go back to [the trace view in Dynatrace](https://inx16596.sprint.apps.dynatracelabs.com/ui/apps/dynatrace.classic.distributed.traces/#trace;traceId=239f6e13100b1d86c2e2a88a82667287). The Synthetic test passes, which means the app works now. Also confirm that orders are being fulfilled and that no orders failed using the notebook. Everything looks good.
+
+ Good canary. Good test. Much applause.
+
+![scenario 4 revealed](readme_images/scenario4-revealed.png)
 
 ## Setup
 
-If you want to run this demo on your own Kubernetes repo follow these instructions:
+You can run this in any k8s cluster and tenant:
 
 Fork the repo. Also go into Github actions and set the action to run (forked repos don't do that by default)
 
