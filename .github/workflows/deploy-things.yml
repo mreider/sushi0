@@ -209,7 +209,7 @@ jobs:
           --status-description="Tests passed" \
           --verbose
     - name: Trigger HTTP Checks
-      id: trigger_synthetic_test
+      id: trigger_http_test
       if: github.event_name == 'repository_dispatch'
       run: |
         MONITOR_ID_TO_USE=$([[ "$RUN_SYNTHETIC" == "1" ]] && echo "${{ secrets.FIRST_MONITOR_ID }}" || echo "${{ secrets.MONITOR_ID }}")
@@ -231,7 +231,7 @@ jobs:
         }')
         executionId=$(echo $response | jq -r '.triggered[0].executions[0].executionId')
         echo "::set-output name=executionId::$executionId"
-        echo "Synthetic Test Triggered: $response"
+        echo "HTTP Check Triggered: $response"
     - name: HTTP Check Results
       if: github.event_name == 'repository_dispatch'
       run: |
@@ -245,18 +245,18 @@ jobs:
           echo "Response: $response"
           status=$(echo "$response" | jq -r '.simpleResults.status')
           if [ "$status" == "SUCCESS" ]; then
-            echo "Synthetic test completed successfully."
+            echo "HTTP Check completed successfully."
             break
           else
-            echo "Attempt $i: Synthetic test still running. Checking again in 10 seconds..."
+            echo "Attempt $i: HTTP Check still running. Checking again in 10 seconds..."
             sleep 11
           fi
         done
         if [ "$status" != "SUCCESS" ]; then
-          echo "Synthetic test did not complete successfully after 3 attempts."
+          echo "HTTP Check test did not complete successfully after 3 attempts."
           echo "workflow_status=error" >> $GITHUB_ENV
           workflow_status=error
-          echo "workflow_description='Synthetic execution ${{ steps.trigger_synthetic_test.outputs.executionId }} failed'" >> $GITHUB_ENV
+          echo "workflow_description='HTTP Check execution ${{ steps.trigger_synthetic_test.outputs.executionId }} failed'" >> $GITHUB_ENV
         fi
         time_end=$(date +%Y-%m-%dT%H:%M:%S.%NZ)
         if [ "$GITHUB_EVENT_NAME" = "repository_dispatch" ]; then
@@ -264,7 +264,7 @@ jobs:
           --endpoint=${{ secrets.DYNATRACE_ENDPOINT }}/api/v2/otlp/v1/traces \
           --otlp-headers="Authorization=Api-Token ${{ secrets.DYNATRACE_TOKEN}}" \
           --service=workflow \
-          --name="Synthetic Testing" \
+          --name="HTTP Check" \
           --force-parent-span-id=${{ env.parent_span_id }} \
           --start=${{ env.synthetic_time_start }}  \
           --end=$time_end \
@@ -291,22 +291,3 @@ jobs:
           --status-code=${{ env.workflow_status }} \
           --status-description"${{ env.workflow_desription }}" \
           --verbose
-    - name: Create a Deploy Event
-      if: github.event_name == 'repository_dispatch'
-      run: |
-        curl -X "POST" \
-          "${{ secrets.DYNATRACE_ENDPOINT }}/api/v2/events/ingest" \
-          -H "accept: application/json; charset=utf-8" \  
-          -H "Authorization: Api-Token ${{ secrets.DYNATRACE_TOKEN }}" \
-          -H "Content-Type: application/json; charset=utf-8" \
-          -d \
-          '{
-          "title" : "Github Workflow Deploy",
-          "eventType": "CUSTOM_DEPLOYMENT",
-          "entitySelector": "type(SERVICE),entityId(SERVICE-EA34D518735AA27C),entityId(SERVICE-C9D0A48918A1A7B7),entityId(SERVICE-6C04B8C7DD464B25)",
-          "properties": {
-            "dt.event.deployment.name":"Github Workflow Deploy",
-            "dt.event.deployment.version": "$SERVICE_VERSION",
-            "dt.event.deployment.release_stage": "canary",
-            "deployedBy": "Matthew Reider" }
-          }'

@@ -8,6 +8,10 @@ Shows end-to-end observability using Dynatrace and OpenTelemetry
 [Quick tour](#quick-tour)
 [Demo time](#demo-time)
 [Scenario 1](#Scenario-1)
+[Scenario 2](#Scenario-2)
+[Scenario 3](#Scenario-3)
+[Scenario 4](#Scenario-4)
+[Setup](#Setup)
 
 ## About the demo
 
@@ -102,7 +106,19 @@ Show the definition of the synthetic test, which hits the /healthz endpoint, and
 
 ![scenario 1](readme_images/scenario1-notebook.png)
 
-When you are finished, you can go back and reveal the scenario in the deploy screen. It's a bad test (/healthz) but the app is ok, so it doesn't matter. That's Scenario 1.
+When you are finished, you can go back and reveal the scenario in the deploy screen. The app is OK, but the test is no good as it checks /healthz.
+
+![scenario 1](readme_images/scenario1-revealed.png)
+
+### Scenario 2
+
+#### Bad canaries
+
+- Browse https://deploy.sushi0.cc and choose scenario 2
+- Explain that the **Deploy** button pushed 1.0.1 of the application and triggered the same HTTP check as before
+- Again - no need to actually deploy, and wait to reveal the scenario until the end
+
+#### Analysis
 
 ## Setup
 
