@@ -5,6 +5,8 @@ import sys
 import logging
 import json
 from opentelemetry import trace
+from opentelemetry import propagate
+from opentelemetry.context import Context
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
@@ -16,7 +18,6 @@ from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry._logs import set_logger_provider
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
-
 
 app = Flask(__name__)
 
@@ -107,7 +108,10 @@ def index():
 def order():
     current_span = trace.get_current_span()
     current_span.set_attribute("span.name", "receive-order")
-    response = requests.post(os.environ['BACKEND_URL'])
+    headers = {}
+    propagate.inject(headers, context=Context.current())
+    response = requests.post(os.environ['BACKEND_URL'], headers=headers)
+
     if response.status_code == 200:
         logging.info("order successful")
         try:

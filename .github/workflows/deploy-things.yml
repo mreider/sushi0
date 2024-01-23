@@ -301,15 +301,16 @@ jobs:
           -H "Content-Type: application/json; charset=utf-8" \
           -d \
           '{
-            "eventType": "CUSTOM_DEPLOYMENT",
-            "attachRules": { "entityIds": ["SERVICE-EA34D518735AA27C"] },
-            "deploymentName": "Deployment change",
-            "deploymentVersion": "$SERVICE_VERSION",
-            "source": "Github Workflow",
-            "customProperties": {
-              "Owner": "Matt Reider (matthew.reider@dynatrace.com",
-              "Git commit": "$GITHUB_SHA""
-            },
-            "deploymentProject": "Sushi To Go"
-          }
+          "title" : "Github Workflow Deploy",
+          "eventType": "CUSTOM_DEPLOYMENT",
+          "attachRules": { "entityIds": ["SERVICE-EA34D518735AA27C","SERVICE-C9D0A48918A1A7B7","SERVICE-6C04B8C7DD464B25"] },
+          "deploymentName": "Github Workflow Deploy",
+          "deploymentVersion": "$SERVICE_VERSION",
+          "source": "Github Workflow",
+          "customProperties": {
+            "Owner": "Matt Reider (matthew.reider@dynatrace.com",
+            "Git commit": "$GITHUB_SHA"
+          },
+          "deploymentProject": "Sushi To Go"
+        }
           }'
