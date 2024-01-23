@@ -73,17 +73,6 @@
 
     </style>
         <script>
-            document.addEventListener('DOMContentLoaded', (event) => {
-                initializeImageVisibility();
-            });
-        
-            function initializeImageVisibility() {
-                var img = document.getElementById("imageContainer").querySelector("img");
-                var button = document.getElementById("showButton");
-                img.style.opacity = "0";
-                button.style.display = "block";
-            }
-        
             function goToScenario() {
                 var scenario = document.getElementById("scenarioSelect").value;
                 window.location.href = "/?scenario=" + scenario;
