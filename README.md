@@ -4,14 +4,14 @@ Shows end-to-end observability using Dynatrace and OpenTelemetry
 
 ## Table of Contents
 
-[About the demo](#About-the-demo)
-[Quick tour](#quick-tour)
-[Demo time](#demo-time)
-[Scenario 1](#Scenario-1)
-[Scenario 2](#Scenario-2)
-[Scenario 3](#Scenario-3)
-[Scenario 4](#Scenario-4)
-[Setup](#Setup)
+- [About the demo](#About-the-demo)
+- [Quick tour](#quick-tour)
+- [Demo time](#demo-time)
+- [Scenario 1](#Scenario-1)
+- [Scenario 2](#Scenario-2)
+- [Scenario 3](#Scenario-3)
+- [Scenario 4](#Scenario-4)
+- [Setup](#Setup)
 
 ## About the demo
 
@@ -104,6 +104,8 @@ Now show [the trace](https://inx16596.sprint.apps.dynatracelabs.com/ui/apps/dyna
 
 Show the definition of the synthetic test, which hits the /healthz endpoint, and explain why this is a problem. This health check has nothing to do with a real user's experience. Go to [the notebook page](https://inx16596.sprint.apps.dynatracelabs.com/ui/document/v0/#share=068c2aee-daa3-43a0-8821-755276eeeb86) we showed before, and confirm that orders are flowing, being fulfilled, and that there are no db errors in the canary namespace.
 
+You can visit the app [here](https://sushi0.cc/)., and see healthz is healthy [here](https://sushi0.cc/healthz).
+
 ![scenario 1 notebook](readme_images/scenario1-notebook.png)
 
 When you are finished, you can go back and reveal the scenario in the deploy screen. The app is OK, but the test is no good as it checks /healthz.
@@ -125,6 +127,8 @@ When you are finished, you can go back and reveal the scenario in the deploy scr
 Return to Github and show a [scenario 2 deployment](https://github.com/mreider/sushi0/actions/runs/7626283397). Focus in on the results of the HTTP Check. Show that the passed in the run log. And then go to [the trace view in Dynatrace](https://inx16596.sprint.apps.dynatracelabs.com/ui/apps/dynatrace.classic.distributed.traces/#trace;traceId=239f6e13100b1d86c2e2a88a82667287). It's the same as before. All of the steps passed. But all is not well.
 
 Look at the Notebook again, with views of orders received and fulfilled. It looks now like there are no orders being fulfilled. Scroll down to the last 10 failed orders and see that now there are orders failing in the canary namespace, not just in the test namespace. And yet, we see 200 response codes. So this is proof that our HTTP health check is a bad way to test the canary before we push to production.
+
+You can visit failing app [here](https://sushi0.cc/) and see healthz is lying [here](https://sushi0.cc/healthz).-
 
 Re-inforce that all of this data is OpenTelemetry.
 
