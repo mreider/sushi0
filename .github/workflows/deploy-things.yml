@@ -303,14 +303,10 @@ jobs:
           '{
           "title" : "Github Workflow Deploy",
           "eventType": "CUSTOM_DEPLOYMENT",
-          "attachRules": { "entityIds": ["SERVICE-EA34D518735AA27C","SERVICE-C9D0A48918A1A7B7","SERVICE-6C04B8C7DD464B25"] },
-          "deploymentName": "Github Workflow Deploy",
-          "deploymentVersion": "$SERVICE_VERSION",
-          "source": "Github Workflow",
-          "customProperties": {
-            "Owner": "Matt Reider (matthew.reider@dynatrace.com",
-            "Git commit": "$GITHUB_SHA"
-          },
-          "deploymentProject": "Sushi To Go"
-        }
+          "entitySelector": { 'type(SERVICE),entityID("SERVICE-EA34D518735AA27C","SERVICE-C9D0A48918A1A7B7","SERVICE-6C04B8C7DD464B25")' }
+          "properties": {
+            "dt.event.deployment.name":"Github Workflow Deploy",
+            "dt.event.deployment.version": "$SERVICE_VERSION",
+            "dt.event.deployment.release_stage": "canary" ,
+            "deployedBy": "Matthew Reider" }
           }'
