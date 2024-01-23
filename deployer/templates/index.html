@@ -23,7 +23,7 @@
             margin-top: 20px;
             text-align: left; /* Align response text to the left */
         }
-        button {
+        .button {
             background-color: #007bff;
             color: white;
             padding: 12px 20px;
@@ -32,8 +32,9 @@
             cursor: pointer;
             font-size: 18px;
             display: block;
-            margin-top: 20px;
-            width: 100%;
+            margin: 10px auto;
+            width: 80%; 
+            z-index: 10;
         }
         button:hover {
             background-color: #0056b3;
@@ -70,28 +71,6 @@
             opacity: 0; /* Initially hidden */
         }
 
-        .show-button {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            z-index: 10;
-        }
-        .deploy-button {
-            transform: translate(-50%, -50%);
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
     </style>
         <script>
             document.addEventListener('DOMContentLoaded', (event) => {
