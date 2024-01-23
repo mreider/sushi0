@@ -109,8 +109,9 @@ def order():
     current_span = trace.get_current_span()
     current_span.set_attribute("span.name", "receive-order")
     headers = {}
-    propagate.inject(headers, context=Context.current())
+    propagate.inject(headers, context=trace.set_span_in_context(current_span))
     response = requests.post(os.environ['BACKEND_URL'], headers=headers)
+   
 
     if response.status_code == 200:
         logging.info("order successful")
