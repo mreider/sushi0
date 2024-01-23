@@ -19,13 +19,16 @@ Since actual deployments take some time, a short video has been embedded below s
 
 | App         | Test         |
 |-------------|--------------|
-| 1.0.0       | Test 1       |
+| 1.0.0       | HTTP Check   |
 
-- Browse https://deploy.sushi0.cc and explain that this page triggers a CI/CD pipeline on Github. 
-- Explain that the **Deploy** button pushed 1.0.0 of the application and trigger some tests. 
-- Don't click reveal scenario until after the analysis
+- Browse https://deploy.sushi0.cc and explain that this page triggers a CI/CD pipeline on Github
+- Explain that the **Deploy** button pushed 1.0.0 of the application and trigger some tests
+- No need to deploy anything - since that takes time - the results are what matters
+- Don't reveal the scenario until after the analysis
 
 #### Analysis
+
+It makes sense to begin with classic screens and end with the latest-greatest. Start with the Unified Services screen for the sushi-backend. This shows everything in context. 
 
 Begin by going to the new [Distributed Tracing view](https://inx16596.sprint.apps.dynatracelabs.com/ui/apps/dynatrace.distributedtracing) and taking a brief tour of the sushi application. Add the Open Telemetry resource attribute Environment to the list of facets, and narrow down the environments to PROD, TEST, and CANARY. The Histogram will show a nice distribution of the response times and failures.
 

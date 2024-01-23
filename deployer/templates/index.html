@@ -129,13 +129,13 @@
         <input type="radio" name="run_synthetic" id="run_synthetic_2" value="2" {% if scenario == '3' or scenario == '4' %}checked{% endif %}>
         <label for="run_synthetic_2">Run Synthetic Test 2</label>
     </div>
-    <button type="submit" class="deploy-button">Deploy</button>
+    <button type="submit" class="button">Deploy</button>
     </form>
 <div class="response">{{ response|safe }}</div>
 
     <div class="image-container" id="imageContainer">
         <img src="/static/images/{{ scenario }}.png" alt="Scenario Image">
-        <button id="showButton" class="show-button" onclick="toggleImage()">Reveal Scenario</button>
+        <button id="showButton" class="button" onclick="toggleImage()">Reveal Scenario</button>
     </div>
 </div>
 </body>

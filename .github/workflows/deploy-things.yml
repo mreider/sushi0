@@ -300,16 +300,16 @@ jobs:
           -H "Authorization: Api-Token ${{ secrets.DYNATRACE_TOKEN }}" \
           -H "Content-Type: application/json; charset=utf-8" \
           -d \
-        '{
-          "eventType": "CUSTOM_DEPLOYMENT",
-          "attachRules": { "entityIds": ["SERVICE-EA34D518735AA27C"] },
-          "deploymentName": "Deployment change",
-          "deploymentVersion": "$SERVICE_VERSION",
-          "source": "Github Workflow",
-          "customProperties": {
-            "Owner": "Matt Reider (matthew.reider@dynatrace.com",
-            "Git commit": "$GITHUB_SHA""
-          },
-          "deploymentProject": "Sushi To Go"
-        }
-        }'
+          '{
+            "eventType": "CUSTOM_DEPLOYMENT",
+            "attachRules": { "entityIds": ["SERVICE-EA34D518735AA27C"] },
+            "deploymentName": "Deployment change",
+            "deploymentVersion": "$SERVICE_VERSION",
+            "source": "Github Workflow",
+            "customProperties": {
+              "Owner": "Matt Reider (matthew.reider@dynatrace.com",
+              "Git commit": "$GITHUB_SHA""
+            },
+            "deploymentProject": "Sushi To Go"
+          }
+          }'

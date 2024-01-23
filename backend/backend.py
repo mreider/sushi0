@@ -4,6 +4,7 @@ import sys
 import random
 import time
 import json
+import logging
 from opentelemetry import trace, metrics
 from opentelemetry.sdk.metrics.export import (AggregationTemporality,PeriodicExportingMetricReader,)
 from opentelemetry.sdk.metrics import MeterProvider, Counter, UpDownCounter, Histogram, ObservableCounter, ObservableUpDownCounter
@@ -14,6 +15,10 @@ from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+from opentelemetry._logs import set_logger_provider
 import mysql.connector
 from opentelemetry.instrumentation.dbapi import trace_integration
 
@@ -34,6 +39,8 @@ for name in ["dt_metadata_e617c525669e072eebe3d0f08212e8f2.json", "/var/lib/dyna
       merged.update(data)
   except:
     pass
+
+logging.basicConfig(level=logging.INFO)
 trace_endpoint = os.getenv('DYNATRACE_ENDPOINT') + "/api/v2/otlp/v1/traces"
 metric_endpoint = os.getenv('DYNATRACE_ENDPOINT') + "/api/v2/otlp/v1/metrics"
 token = os.getenv('DYNATRACE_TOKEN')
@@ -46,6 +53,7 @@ trace_headers = {
 metric_headers = {
 "Authorization": f"Api-Token {token}"
 }
+
 SERVICE_NAME = os.getenv('SERVICE_NAME', 'backend')
 SERVICE_VERSION = os.getenv('SERVICE_VERSION', '1.0.0')
 ENVIRONMENT = os.getenv('ENVIRONMENT', 'canary')
@@ -54,11 +62,21 @@ merged.update({
     "service.version": SERVICE_VERSION,
     "environment": ENVIRONMENT
 })
+set_logger_provider(logger_provider)
+logger_provider = LoggerProvider(resource=Resource.create(merged))
+logger_provider.add_log_record_processor(
+  BatchLogRecordProcessor(OTLPLogExporter(
+    endpoint = os.getenv('DYNATRACE_ENDPOINT') + "/api/v2/otlp/v1/logs",
+	headers = {"Authorization": "Api-Token " + token}
+  ))
+)
+handler = LoggingHandler(level=logging.NOTSET, logger_provider=logger_provider)
 trace.set_tracer_provider(
     TracerProvider(
         resource=Resource.create(merged)
     )
 )
+logging.getLogger().addHandler(handler)
 tracer = trace.get_tracer(__name__)
 span_processor = BatchSpanProcessor(OTLPSpanExporter(endpoint=trace_endpoint, headers=trace_headers))
 trace.get_tracer_provider().add_span_processor(span_processor)
@@ -125,12 +143,14 @@ def index():
         orders_fulfilled_counter.add(0)
         current_span.set_attribute("order.fulfilled", "False")
         current_span.set_attribute("span.status", "ERROR")
-        return make_response(jsonify(error="Internal Server Error due to fix SHA in version"), 500)
+        logging.error("500 Internal Server Error")
+        return make_response(jsonify(error="Internal Server Error"), 500)
     patch_digit = os.environ['SERVICE_VERSION'].split('.')[2][0]
     patch_number = int(patch_digit)
     if patch_number % 2 != 0:
         get_sushi_by_type("typo = 'miso'")
         current_span.set_attribute("order.fulfilled", "False")
+        logging.info("Did not fulfill order")
         current_span.set_attribute("span.status", "OK")
         emoji = '<span id="no">❌</span>'
     else:
@@ -138,6 +158,7 @@ def index():
         current_span.set_attribute("order.fulfilled", "True")
         orders_fulfilled_counter.add(1)
         emoji = '<span id="yes">🍣</span>'
+        logging.info("Order fulfilled")
         current_span.set_attribute("span.status", "OK")
     return jsonify(emoji=emoji)
 
