@@ -5,13 +5,16 @@ Shows end-to-end observability using Dynatrace and OpenTelemetry
 ## Table of Contents
 
 [About the demo](#About-the-demo)
+[Quick tour](#quick-tour)
 [Scenario 1](#Scenario-1)
 
 ## About the demo
 
-This demo illustrates how valuable Dynatrace is for analyzing OpenTelemetry Traces, Metrics, and Logs. Like any good demo it tells a story, and illustrates some end-to-end use cases involving Kubernetes workloads, CI/CD pipelines, and canary deployments.
+This demo illustrates how valuable Dynatrace is for analyzing OpenTelemetry Traces, Metrics, and Logs. It begins with a quick tour of the product, starting with some familiar classic screens, and ending with new experiences like Distributed Tracing, Notebooks, and Kubernetes.
 
-Since actual deployments take some time, a short video has been embedded below showing each scenario. There are links to the Dynatrace Perform environment for specific notebooks and screens in each section below.
+After the tour, the demo will focus on the importance of OpenTelemetry for monitoring Kubernetes workloads, as well as CI/CD pipelines, and present some interesting scenarios borrowed from the [OpenTelemetry Perform Breakout session with Northwestern Mutual Life](https://www.dynatrace.com/perform/agenda/?region=NORAM&type=LIVE&session=embrace-open-source-observability-with-end-to-end-visibility-into-opentelemetry).
+
+For reference purposes we will be demonstrating a little application that requests and fulfills sushi orders. This will make more sense after the product tour, and might be useful as a reference.
 
 ![architecture](readme_images/architecture.png)
 
@@ -40,20 +43,42 @@ Now it's time to look at some new things! We'll start with the new Distributed T
 
 Stay in the Distributed Tracing experience and adjust the facets to show more information about different environments and namespaces. The "test" namespace has errors. Selecting all of the namespaces, and choosing different services will show the distribution of response times between these services. Choosing the db.name facet, and filtering on the database "sushi" (span view) will show response times of database calls. Remind the viewer that all of this is 100% OpenTelemetry information. There are no agents in this Kubernetes cluster.
 
-Finally, we can go to the [Sushi Notebook page](https://inx16596.sprint.apps.dynatracelabs.com/ui/apps/dynatrace.notebooks/notebook/61a57859-c478-4f08-805e-96b4a20a6ec5) to further illustrate how we can ask questions about metrics, logs, and spans to do deeper analysis. Explain that DQL is an easy language, and that these queries should be easy to interpret, but also mention that we're building a CoPilot experience to translate English queries into DQL.
+Next we can go to the [Sushi Notebook page](https://inx16596.sprint.apps.dynatracelabs.com/ui/apps/dynatrace.notebooks/notebook/61a57859-c478-4f08-805e-96b4a20a6ec5) to further illustrate how we can ask questions about metrics, logs, and spans to do deeper analysis. Explain that DQL is an easy language, and that these queries should be easy to interpret, but also mention that we're building a CoPilot experience to translate English queries into DQL.
 
 ![Notebooks](readme_images/tour-notebooks.png)
 
+Go through each query emphasizing the simplicity of the syntax. Write a new query to show how it's done.
 
+```
+fetch spans
+| filter db.name != ""
+| filter service.name == "sushi-backend"
+| filter startsWith(db.statement, "select")
+| summarize count(), alias: cnt, by: {db.statement}
+| sort cnt desc
 
+```
+
+Lastly we can look at the Kubernetes application. At this time the Sushi app will not appear in the application, but the OpenTelemetry demo is also installed on this cluster. Filter by the astronomy-sprint cluster and show how OpenTelemetry attributes appear for each workload. Explain that there are no OneAgents in this cluster.
+
+![Notebooks](readme_images/tour-kubernetes.png)
+
+### Demo time!
+
+Now that you've illustrated the power of using Dynatrace for OpenTelemetry analysis, it's time to tell a story. It's the same story presented during the Perform session with Northwestern Mutual Life, who uses OpenTelemetry to send information from their Gitlab pipeline about the success, or failure, of canary deployments. It's a nice end-to-end example of how critical Dynatrace is when shifting left to improve quality via continuous integration and deployments.
+
+The demo is broken up into four different scenarios. All of this information is sent to Dynatrace via a CI/CD Github Workflow instrumented with OpenTelemetry. We'll look at the traces in Dynatrace and explore how our CI/CD pipeline improved over time.
+
+| Scenario    | Backend      | Test         | Namespace    |  Take-away                                                                                 |
+|-------------| -------------| -----------  | -------------|--------------------------------------------------------------------------------------------|
+| 1           | 1.0.0        | HTTP Check   | Canary       | HTTP checks are inadquate for catching problems. Fortunately, this version is problem free.|
+| 2           | 1.0.1        | HTTP Check   | Canary       | Now we see the problem with HTTP checks. There are 200s, but DB errors and failed orders   |
+| 3           | 1.0.1        | Synthetic    | Canary       | Success. We catch the problem. Even though there are 200s the canary test fails            |
+| 4           | 1.0.2        | Synthetic    | Canary       | Now we're back to a normal state. No failures, and much better test coverage               |
 
 ### Scenario 1
 
-#### Deployment
-
-| Backend     | Test         | Namespace    |
-|-------------| -------------| -----------  |
-| 1.0.0       | HTTP Check   | Canary       |
+#### Triggering the pipeline
 
 - Browse https://deploy.sushi0.cc and explain that this page triggers a CI/CD pipeline on Github
 - Explain that the **Deploy** button pushed 1.0.0 of the application and trigger some tests

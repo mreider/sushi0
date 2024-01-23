@@ -91,13 +91,16 @@
         
             function toggleImage() {
                 var img = document.getElementById("imageContainer").querySelector("img");
-                var button = document.getElementById("showButton");
-                if (img.style.opacity === "0") {
-                    img.style.opacity = "1";
-                    button.style.display = "none";
+                var scenario = document.getElementById("scenarioSelect").value;
+                var defaultImg = "/static/images/question.png"; 
+                var scenarioImg = "/static/images/" + scenario + ".png";
+
+                if (img.getAttribute('src') === defaultImg) {
+                    img.src = scenarioImg;
+                    img.style.opacity = "1"; 
                 } else {
-                    img.style.opacity = "0";
-                    button.style.display = "block";
+                    img.src = defaultImg;
+                    img.style.opacity = "0"; 
                 }
             }
         </script>
@@ -133,7 +136,7 @@
     </form>
 <div class="response">{{ response|safe }}</div>
     <div class="image-container" id="imageContainer">
-        <img src="/static/images/{{ scenario }}.png" alt="Scenario Image">
+        <img src="/static/images/question.png" alt="Scenario Image" style="opacity: 1;">
     </div>
     <div>&nbsp;</div>
     <button id="showButton" class="button" onclick="toggleImage()">Reveal Scenario</button>
