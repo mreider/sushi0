@@ -163,7 +163,7 @@ jobs:
         if [ "$GITHUB_EVENT_NAME" = "repository_dispatch" ]; then
           NAMESPACE=canary
           FREQUENCY="10.0"
-          SERVICE_VERSION=$SERVICE_VERSION # 1.0.0 or 1.0.1 - which has errors
+          SERVICE_VERSION=$SERVICE_VERSION # 1.0.0 or 1.0.1 - which has errors 1.0.2 is also good
           export NAMESPACE
           export SERVICE_VERSION
           export FREQUENCY
@@ -303,10 +303,10 @@ jobs:
           '{
           "title" : "Github Workflow Deploy",
           "eventType": "CUSTOM_DEPLOYMENT",
-          "entitySelector": { 'type(SERVICE),entityID("SERVICE-EA34D518735AA27C","SERVICE-C9D0A48918A1A7B7","SERVICE-6C04B8C7DD464B25")' }
+          "entitySelector": { "type": "SERVICE", "entityID": ["SERVICE-EA34D518735AA27C","SERVICE-C9D0A48918A1A7B7","SERVICE-6C04B8C7DD464B25"] },
           "properties": {
             "dt.event.deployment.name":"Github Workflow Deploy",
             "dt.event.deployment.version": "$SERVICE_VERSION",
-            "dt.event.deployment.release_stage": "canary" ,
+            "dt.event.deployment.release_stage": "canary",
             "deployedBy": "Matthew Reider" }
           }'
