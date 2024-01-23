@@ -2,18 +2,34 @@
 
 Shows end-to-end observability using Dynatrace and OpenTelemetry 
 
+## Table of Contents
+
+[About the demo](#About-the-demo)
+[Scenario 1](#Scenario-1)
+
 ## About the demo
 
 This demo illustrates how valuable Dynatrace is for analyzing OpenTelemetry Traces, Metrics, and Logs. Like any good demo it tells a story, and illustrates some end-to-end use cases involving Kubernetes workloads, CI/CD pipelines, and canary deployments.
 
-## The script
+Since actual deployments take some time, a short video has been embedded below showing each scenario. There are links to the Dynatrace Perform environment for specific notebooks and screens in each section below.
 
-Since actual deployments take some time, a short video has been embedded below showing each scenario. To reproduce these scenarios, or to show someone how the application works, follow these instructions.
+### Scenario 1
 
-### Introduction
+#### Deployment
 
-Browse https://deploy.sushi0.cc and explain that this page triggers a CI/CD pipeline on Github. The first scenario will deploy version 1.0.0 of the application, and trigger some tests. Run the scenario but do not reveal the situation yet.
+| App         | Test         |
+|-------------|--------------|
+| 1.0.0       | Test 1       |
 
+- Browse https://deploy.sushi0.cc and explain that this page triggers a CI/CD pipeline on Github. 
+- Explain that the **Deploy** button pushed 1.0.0 of the application and trigger some tests. 
+- Don't click reveal scenario until after the analysis
+
+#### Analysis
+
+Begin by going to the new [Distributed Tracing view](https://inx16596.sprint.apps.dynatracelabs.com/ui/apps/dynatrace.distributedtracing) and taking a brief tour of the sushi application. Add the Open Telemetry resource attribute Environment to the list of facets, and narrow down the environments to PROD, TEST, and CANARY. The Histogram will show a nice distribution of the response times and failures.
+
+![scenario1-histogram-overview](scenario1-histogram-overview.png)
 
 ## Setup
 

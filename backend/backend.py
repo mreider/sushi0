@@ -122,6 +122,7 @@ def index():
     if len(version_parts) > 3:
         # If there's a fix SHA (1.0.0.fixsha), return a 500 Internal Server Error
         get_sushi_by_type("typo = 'miso'") # This will create a db error
+        orders_fulfilled_counter.add(0)
         current_span.set_attribute("order.fulfilled", "False")
         current_span.set_attribute("span.status", "ERROR")
         return make_response(jsonify(error="Internal Server Error due to fix SHA in version"), 500)
