@@ -116,12 +116,12 @@
    <div>&nbsp;</div>
    <form action="/run" method="post">
     <input type="hidden" name="scenario" value="{{ scenario }}">
-    <div class="form-item">
-        <input type="radio" name="version_number" id="version_1" value="1.0.0" {% if scenario == '1' or scenario == '4' %}checked{% endif %}>
+        <input type="radio" name="version_number" id="version_1" value="1.0.0" {% if scenario == '1' %}checked{% endif %}>
         <label for="version_1">Version 1.0.0</label><br>
-        <input type="radio" name="version_number" id="version_0" value="1.0.1" {% if scenario == '2' or scenario == '3' %}checked{% endif %}>
-        <label for="version_0">Version 1.0.1</label>
-    </div>
+        <input type="radio" name="version_number" id="version_2" value="1.0.1" {% if scenario == '2' or scenario == '3' %}checked{% endif %}>
+        <label for="version_2">Version 1.0.1</label><br>
+        <input type="radio" name="version_number" id="version_3" value="1.0.2" {% if scenario == '4' %}checked{% endif %}>
+        <label for="version_3">Version 1.0.2</label>
     <hr>
     <div class="form-item">
         <input type="radio" name="run_synthetic" id="run_synthetic_1" value="1" {% if scenario == '1' or scenario == '2' %}checked{% endif %}>

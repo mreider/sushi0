@@ -107,13 +107,12 @@ orders_fulfilled_counter = meter.create_counter(
     description="Total number of orders fulfilled",
 )
 
-def get_sushi_by_type(where_clause):
+def get_sushi_by_type(query):
     conn = None
     cursor = None
     try:
         conn = mysql.connector.connect(user=db_user, password=db_password, host=db_host, database=db_database)
         cursor = conn.cursor()
-        query = "SELECT id FROM sushi WHERE " + where_clause
         cursor.execute(query)
         sushi_data = cursor.fetchall()
         return sushi_data
@@ -136,11 +135,12 @@ def index():
     seconds = milliseconds / 1000.0
     time.sleep(seconds)
     # Check if a fix SHA exists in the version number - this represents a test, and always fails
-    # The other (1.0.0 or 1.0.1) will send a 200 but with different results, thus the need for synthetic tests
+    # The others (1.0.0, 1.0.1, 1.0.2) will send a 200 but with different results, thus the need for synthetic tests
     version_parts = os.environ['SERVICE_VERSION'].split('.')
     if len(version_parts) > 3:
         # If there's a fix SHA (1.0.0.fixsha), return a 500 Internal Server Error
-        get_sushi_by_type("typo = 'miso'") # This will create a db error
+        get_sushi_by_type("SELECT id FROM sushi WHERE typo = 'miso'") # This will create a db error
+        current_span.set_attribute("db.statement", "SELECT id FROM sushi WHERE typo = 'miso'")
         orders_fulfilled_counter.add(0)
         current_span.set_attribute("order.fulfilled", "False")
         current_span.set_attribute("span.status", "ERROR")
@@ -149,13 +149,15 @@ def index():
     patch_digit = os.environ['SERVICE_VERSION'].split('.')[2][0]
     patch_number = int(patch_digit)
     if patch_number % 2 != 0:
-        get_sushi_by_type("typo = 'miso'")
+        get_sushi_by_type("SELECT id FROM sushi WHERE typo = 'miso'")
+        current_span.set_attribute("db.statement", "SELECT id FROM sushi WHERE typo = 'miso'")
         current_span.set_attribute("order.fulfilled", "False")
         logging.info("Did not fulfill order")
         current_span.set_attribute("span.status", "OK")
         emoji = '<span id="no">❌</span>'
     else:
-        get_sushi_by_type("type = 'nigiri'")
+        get_sushi_by_type("SELECT id FROM sushi WHERE type = 'nigiri'")
+        current_span.set_attribute("db.statement", "SELECT id FROM sushi WHERE type = 'nigiri'")
         current_span.set_attribute("order.fulfilled", "True")
         orders_fulfilled_counter.add(1)
         emoji = '<span id="yes">🍣</span>'

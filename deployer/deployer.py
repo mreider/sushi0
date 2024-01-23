@@ -29,13 +29,14 @@ def healthz():
 @auth.login_required
 def run():
     scenario = request.form.get('scenario')
-    version_map = {'1': '1.0.0', '2': '1.0.1', '3': '1.0.1', '4': '1.0.0'}
+    version_map = {'1': '1.0.0', '2': '1.0.1', '3': '1.0.1', '4': '1.0.2'}
     test_map = {'1': '1', '2': '1', '3': '2', '4': '2'}
     version_number = version_map.get(scenario, '1.0.0')
     run_synthetic = test_map.get(scenario, '1')
     trigger_github_workflow(version_number, run_synthetic)
     session['response'] = f'<ul><li>Version deployed: {version_number}</li><li>Test triggered: {run_synthetic}</li></ul>'
     return redirect(url_for('index', scenario=scenario))
+
 
 def trigger_github_workflow(version_number, run_synthetic):
     token = os.getenv('GITHUB_TOKEN')
