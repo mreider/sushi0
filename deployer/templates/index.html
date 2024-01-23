@@ -90,19 +90,17 @@
             }
         
             function toggleImage() {
-                var img = document.getElementById("imageContainer").querySelector("img");
-                var scenario = document.getElementById("scenarioSelect").value;
-                var defaultImg = "/static/images/question.png"; 
-                var scenarioImg = "/static/images/" + scenario + ".png";
+            var img = document.getElementById("imageContainer").querySelector("img");
+            var scenario = document.getElementById("scenarioSelect").value;
+            var defaultImg = "/static/images/question.png";
+            var scenarioImg = "/static/images/" + scenario + ".png";
 
-                if (img.getAttribute('src') === defaultImg) {
-                    img.src = scenarioImg;
-                    img.style.opacity = "1"; 
-                } else {
-                    img.src = defaultImg;
-                    img.style.opacity = "0"; 
-                }
+            if (img.src.includes(defaultImg)) {
+                img.src = scenarioImg;
+            } else {
+                img.src = defaultImg;
             }
+        }
         </script>
 </head>
 <body>
