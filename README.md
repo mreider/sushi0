@@ -42,7 +42,7 @@ Now it's time to look at some new things! We'll start with the new Distributed T
 
 Stay in the Distributed Tracing experience and adjust the facets to show more information about different environments and namespaces. The "test" namespace has errors. Selecting all of the namespaces, and choosing different services will show the distribution of response times between these services. Choosing the db.name facet, and filtering on the database "sushi" (span view) will show response times of database calls. Remind the viewer that all of this is 100% OpenTelemetry information. There are no agents in this Kubernetes cluster.
 
-Next we can go to the [Sushi Notebook page](https://inx16596.sprint.apps.dynatracelabs.com/ui/apps/dynatrace.notebooks/notebook/61a57859-c478-4f08-805e-96b4a20a6ec5) to further illustrate how we can ask questions about metrics, logs, and spans to do deeper analysis. Explain that DQL is an easy language, and that these queries should be easy to interpret, but also mention that we're building a CoPilot experience to translate English queries into DQL.
+Next we can go to the [Sushi Notebook page](https://inx16596.sprint.apps.dynatracelabs.com/ui/document/v0/#share=068c2aee-daa3-43a0-8821-755276eeeb86) to further illustrate how we can ask questions about metrics, logs, and spans to do deeper analysis. Explain that DQL is an easy language, and that these queries should be easy to interpret, but also mention that we're building a CoPilot experience to translate English queries into DQL.
 
 ![Notebooks](readme_images/tour-notebooks.png)
 
@@ -88,13 +88,21 @@ The demo is broken up into four different scenarios. All of this information is 
 - No need to deploy anything - since that takes time - the results are what matters
 - Don't click "reveal scenario" until after the analysis
 
-A sample pipeline run [is here](https://github.com/mreider/sushi0/actions/runs/7625438947).
-
 ![scenario 1](readme_images/scenario1-deployer.png)
 
 #### Analysis
 
-View the 
+Show the pipeline, and [all of its steps on Github](https://github.com/mreider/sushi0/actions/runs/7625438947). Now explain that this Github Workflow is sending traces to Dynatrace for each step of the pipeline. We do this to measure how performant it is, catch problems in deploying the application, run integration tests, and run HTTP checks on the public load balancer that exposes the Kubernetes service.
+
+![scenario 1](readme_images/scenario1-pipeline.png)
+
+Now show [the trace](https://inx16596.sprint.apps.dynatracelabs.com/ui/apps/dynatrace.classic.distributed.traces/#trace;traceId=239f6e13100b1d86c2e2a88a82667287) that the pipeline created. Click into each span and show the success method for each. No errors here. Call attention to the synthetic test that runs at the end, and show [this in the synthetic screen](https://inx16596.sprint.apps.dynatracelabs.com/ui/apps/dynatrace.classic.synthetic/ui/http-monitor/HTTP_CHECK-6FA35DA4ECA0E137). The tests passed.
+
+Show the definition of the synthetic test, which hits the /healthz endpoint, and explain why this is a problem. This health check has nothing to do with a real user's experience. Go to [the notebook page](https://inx16596.sprint.apps.dynatracelabs.com/ui/document/v0/#share=068c2aee-daa3-43a0-8821-755276eeeb86) we showed before, and confirm that orders are flowing, being fulfilled, and that there are no db errors in the canary namespace.
+
+![scenario 1](readme_images/scenario1-notebook.png)
+
+When you are finished, you can go back and reveal the scenario in the deploy screen. It's a bad test (/healthz) but the app is ok, so it doesn't matter. That's Scenario 1.
 
 ## Setup
 
@@ -114,6 +122,7 @@ GKE_CLUSTER_ZONE: The Availablity Zone of the cluster
 FIRST_MONITOR_ID: The ID of a simple HTTP monitor (script below)
 MONITOR_ID: The ID of a better synthetic monitor (script below)
 DYNATRACE_ENDPOINT: The endpoint URL for your Dynatrace server
+ENTITY_LIST: A list of the service entity ID's (this is not yet implemented - hardcoded)
 DYNATRACE_TOKEN: The API token for Dynatrace. Requires events.ingest,openTelemetryTrace.ingest, syntheticExecutions.read, syntheticExecutions.write
 ```
 

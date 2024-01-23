@@ -296,14 +296,14 @@ jobs:
       run: |
         curl -X "POST" \
           "${{ secrets.DYNATRACE_ENDPOINT }}/api/v2/events/ingest" \
-          -H "accept: application/json; charset=utf-8" \
+          -H "accept: application/json; charset=utf-8" \  
           -H "Authorization: Api-Token ${{ secrets.DYNATRACE_TOKEN }}" \
           -H "Content-Type: application/json; charset=utf-8" \
           -d \
           '{
           "title" : "Github Workflow Deploy",
           "eventType": "CUSTOM_DEPLOYMENT",
-          "entitySelector": { "type": "SERVICE", "entityID": ["SERVICE-EA34D518735AA27C","SERVICE-C9D0A48918A1A7B7","SERVICE-6C04B8C7DD464B25"] },
+          "entitySelector": "type(SERVICE),entityId(SERVICE-EA34D518735AA27C),entityId(SERVICE-C9D0A48918A1A7B7),entityId(SERVICE-6C04B8C7DD464B25)",
           "properties": {
             "dt.event.deployment.name":"Github Workflow Deploy",
             "dt.event.deployment.version": "$SERVICE_VERSION",
