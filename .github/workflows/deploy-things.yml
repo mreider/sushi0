@@ -302,12 +302,14 @@ jobs:
           -d \
         '{
           "eventType": "CUSTOM_DEPLOYMENT",
-          "source": "GitHub Actions",
-          "deploymentName": "Deploy to Kubernetes",
-          "deploymentVersion": "'${{ env.SERVICE_VERSION }}'",
-          "deploymentProject": "Sushi To Go",
+          "attachRules": { "entityIds": ["SERVICE-EA34D518735AA27C"] },
+          "deploymentName": "Deployment change",
+          "deploymentVersion": "$SERVICE_VERSION",
+          "source": "Github Workflow",
           "customProperties": {
-            "workflow_status": "'${{ env.workflow_status }}'",
-            "workflow_description": "'${{ env.workflow_description }}'"
-          }
+            "Owner": "Matt Reider (matthew.reider@dynatrace.com",
+            "Git commit": "$GITHUB_SHA""
+          },
+          "deploymentProject": "Sushi To Go"
+        }
         }'

@@ -129,7 +129,7 @@ def index():
     patch_digit = os.environ['SERVICE_VERSION'].split('.')[2][0]
     patch_number = int(patch_digit)
     if patch_number % 2 != 0:
-        get_sushi_by_type("type = 'maki'")
+        get_sushi_by_type("typo = 'miso'")
         current_span.set_attribute("order.fulfilled", "False")
         current_span.set_attribute("span.status", "OK")
         emoji = '<span id="no">❌</span>'
