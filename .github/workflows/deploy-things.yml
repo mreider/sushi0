@@ -212,7 +212,11 @@ jobs:
       id: trigger_http_test
       if: github.event_name == 'repository_dispatch'
       run: |
-        MONITOR_ID_TO_USE=$([[ "$RUN_SYNTHETIC" == "1" ]] && echo "${{ secrets.FIRST_MONITOR_ID }}" || echo "${{ secrets.MONITOR_ID }}")
+        if [ "$RUN_SYNTHETIC" == "1" ]; then
+          MONITOR_ID_TO_USE=${{ secrets.FIRST_MONITOR_ID }}
+        else
+          MONITOR_ID_TO_USE=${{ secrets.MONITOR_ID }}
+        fi
         echo "synthetic_time_start=$(date +%Y-%m-%dT%H:%M:%S.%NZ)" >> $GITHUB_ENV
         response=$(curl -X "POST" \
           "${{ secrets.DYNATRACE_ENDPOINT }}/api/v2/synthetic/executions/batch" \

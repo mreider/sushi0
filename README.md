@@ -19,7 +19,7 @@ This demo illustrates how valuable Dynatrace is for analyzing OpenTelemetry Trac
 
 After the tour, the demo will focus on the importance of OpenTelemetry for monitoring Kubernetes workloads, as well as CI/CD pipelines, and present some interesting scenarios borrowed from the [OpenTelemetry Perform Breakout session with Northwestern Mutual Life](https://www.dynatrace.com/perform/agenda/?region=NORAM&type=LIVE&session=embrace-open-source-observability-with-end-to-end-visibility-into-opentelemetry).
 
-For reference purposes we will be demonstrating a little application that requests and fulfills sushi orders. If you want to see how the application works you should skip ahead to [Demo time](#demo-time)
+For reference purposes we will be demonstrating a little application that requests and fulfills sushi orders. If you want to see how the application works you should skip ahead to [Demo time](#demo-time).
 
 ### Quick tour
 
@@ -34,19 +34,20 @@ Start with the Unified Services screen for the [sushi-frontend in the test names
 
 ![unified services](readme_images/tour-unified.png)
 
-Click on a trace to see more information about it and click the trace id to go to a classic trace screen. Mention that this is exactly the same experience no matter if you're using OpenTelemetry or OneAgent.
+Click on a trace to see more information about it and click the trace id to go to a classic trace screen. Mention that this is the same experience no matter if you're using OpenTelemetry or OneAgent.
 
 Show that the trace includes the OpenTelemetry error and logs.
 
+
 ![classic traces](readme_images/tour-classic-trace.png)
 
-Now it's time to look at some new things! We'll start with the new Distributed Tracing Experience. The number of traces is overwhelming so we will limit what we're looking at by using facets to view our Sushi application. An easy way to do that is to Add "environment" as a facet and filter on "prod", "test", and "canary" - mention that these are resource attributes on all of our OpenTelemetry spans.
+Now it's time to look at some new things! We'll start with the new Distributed Tracing Experience. The number of traces is overwhelming so we will limit what we're looking at by using facets to view our Sushi application. An easy way to do that is to Add "environment" as a facet and filter on "prod", "test", and "canary" - mention that these are resource attributes on all our OpenTelemetry spans.
 
 ![distributed tracing experience](readme_images/tour-trace-intelligence.png)
 
-Stay in the Distributed Tracing experience and adjust the facets to show more information about different environments and namespaces. The "test" namespace has errors. Selecting all of the namespaces, and choosing different services will show the distribution of response times between these services. Choosing the db.name facet, and filtering on the database "sushi" (span view) will show response times of database calls. Remind the viewer that all of this is 100% OpenTelemetry information. There are no agents in this Kubernetes cluster.
+Stay in the Distributed Tracing experience and adjust the facets to show more information about different environments and namespaces. The "test" namespace has errors. Selecting all the namespaces and choosing different services will show the distribution of response times between these services. Choosing the db.name facet, and filtering on the database "sushi" (span view) will show response times of database calls. Remind the viewer that all of this is 100% OpenTelemetry information. There are no agents in this Kubernetes cluster.
 
-Next we can go to the [Sushi Notebook page](https://inx16596.sprint.apps.dynatracelabs.com/ui/document/v0/#share=068c2aee-daa3-43a0-8821-755276eeeb86) to further illustrate how we can ask questions about metrics, logs, and spans to do deeper analysis. Explain that DQL is an easy language, and that these queries should be easy to interpret, but also mention that we're building a CoPilot experience to translate English queries into DQL.
+Next we can go to the [Sushi Notebook page](https://inx16596.sprint.apps.dynatracelabs.com/ui/document/v0/#share=068c2aee-daa3-43a0-8821-755276eeeb86) to further illustrate how we can ask questions about metrics, logs, and spans to do deeper analysis. Explain that DQL is an easy language, and that these queries should be easy to interpret, but also mention that we're building a Copilot experience to translate English queries into DQL.
 
 ![Notebooks](readme_images/tour-notebooks.png)
 
@@ -62,7 +63,7 @@ fetch spans
 
 ```
 
-Lastly we can look at the Kubernetes application. At this time the Sushi app will not appear in the application, but the OpenTelemetry demo is also installed on this cluster. Filter by the astronomy-sprint cluster and show how OpenTelemetry attributes appear for each workload. Explain that there are no OneAgents in this cluster.
+Lastly, we can look at the Kubernetes application. At this time the Sushi app will not appear in the application, but the OpenTelemetry demo is also installed on this cluster. Filter by the astronomy-sprint cluster and show how OpenTelemetry attributes appear for each workload. Explain that there are no OneAgents in this cluster.
 
 ![Notebooks](readme_images/tour-kubernetes.png)
 
@@ -70,7 +71,8 @@ Lastly we can look at the Kubernetes application. At this time the Sushi app wil
 
 Now that you've illustrated the power of using Dynatrace for OpenTelemetry analysis, it's time to tell a story. It's the same story presented during the Perform session with Northwestern Mutual Life, who uses OpenTelemetry to send information from their Gitlab pipeline about the success, or failure, of canary deployments. It's a nice end-to-end example of how critical Dynatrace is when shifting left to improve quality via continuous integration and deployments.
 
-The demo is broken up into four different scenarios. All of this information is sent to Dynatrace via a CI/CD Github Workflow instrumented with OpenTelemetry. We'll look at the traces in Dynatrace and explore how our CI/CD pipeline improved over time.
+The demo is broken up into four different scenarios. All this information is sent to Dynatrace via a CI/CD Github Workflow instrumented with OpenTelemetry. We'll look at the traces in Dynatrace and explore how our CI/CD pipeline improved over time.
+ this information is sent to Dynatrace via a CI/CD Github Workflow instrumented with OpenTelemetry. We'll look at the traces in Dynatrace and explore how our CI/CD pipeline improved over time.
 
 | Scenario    | Backend      | Test         | Namespace    |  Take-away                                                                                 |
 |-------------| -------------| -----------  | -------------|--------------------------------------------------------------------------------------------|
