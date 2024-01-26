@@ -234,13 +234,12 @@ jobs:
           ]
         }')
         executionId=$(echo $response | jq -r '.triggered[0].executions[0].executionId')
-        echo "::set-output name=executionId::$executionId"
+        echo "executionId=$executionId" >> $GITHUB_ENV
         echo "HTTP Check Triggered: $response"
     - name: HTTP Check Results
       if: github.event_name == 'repository_dispatch'
       run: |
         workflow_status=ok
-        executionId=${{ steps.trigger_synthetic_test.outputs.executionId }}
         for i in {1..3}; do
           response=$(curl -X "GET" \
             "${{ secrets.DYNATRACE_ENDPOINT }}/api/v2/synthetic/executions/$executionId" \
@@ -260,7 +259,11 @@ jobs:
           echo "HTTP Check test did not complete successfully after 3 attempts."
           echo "workflow_status=error" >> $GITHUB_ENV
           workflow_status=error
-          echo "workflow_description='HTTP Check execution ${{ steps.trigger_synthetic_test.outputs.executionId }} failed'" >> $GITHUB_ENV
+            if ${{ env.executionId }} == null; then
+              echo "workflow_description='HTTP Check execution ${{ env.executionId }} not found'" >> $GITHUB_ENV
+            else
+              echo "workflow_description='HTTP Check execution ${{ env.executionId }} failed'" >> $GITHUB_ENV
+            fi
         fi
         time_end=$(date +%Y-%m-%dT%H:%M:%S.%NZ)
         if [ "$GITHUB_EVENT_NAME" = "repository_dispatch" ]; then
