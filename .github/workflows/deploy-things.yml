@@ -2,9 +2,9 @@ name: Deploy Things
 on:
   repository_dispatch:
     types: [deploy]
-  push:
-    branches:
-      - main
+#  push:
+#    branches:
+#      - main
 env:
   BACKEND_IMAGE: mreider/thumbs-up-backend
   FRONTEND_IMAGE: mreider/thumbs-up-frontend
