@@ -152,7 +152,7 @@ def index():
         get_sushi_by_type("SELECT id FROM sushi WHERE typo = 'miso'")
         current_span.set_attribute("db.statement", "SELECT id FROM sushi WHERE typo = 'miso'")
         current_span.set_attribute("order.fulfilled", "False")
-        logging.info("Did not fulfill order")
+        logging.error("Error fulfilling order")
         current_span.set_attribute("span.status", "OK")
         emoji = '<span id="no">❌</span>'
     else:
